@@ -1,13 +1,15 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { MCPChatbotService } from "./mcp-server.js";
+import { ChatbotService } from "./services/chatbot.service.js";
+import { Logger } from "./utils/logger.js";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.MCP_PORT || 3001;
 
+// Middleware
 app.use(
   cors({
     origin:
@@ -19,38 +21,48 @@ app.use(
 );
 app.use(express.json());
 
-// Health check endpoint
+/**
+ * Health check endpoint
+ * GET /health
+ */
 app.get("/health", (req, res) => {
-  res.json({ status: "ok", service: "mcp-server" });
+  Logger.info("Health check requested");
+  res.json({
+    status: "ok",
+    service: "mcp-server",
+    timestamp: new Date().toISOString(),
+  });
 });
 
-// Main chat endpoint
+/**
+ * Main chat endpoint for AI conversations
+ * POST /chat
+ * Body: { message, product_id?, user_id?, conversation_history? }
+ * Headers: { Authorization, Cookie }
+ */
 app.post("/chat", async (req, res) => {
   try {
-    const authorization = req.headers.authorization || "";
-    console.log("-----=-=-=-=-=-=-=-=--=-=->>>>>>>>>>>>:", req.headers);
-    console.log("-----=-=-=-=-=-=-=-=--=-=->>>>>>>>>>>>:");
-    console.log("-----=-=-=-=-=-=-=-=--=-=->>>>>>>>>>>>:");
-    console.log("-----=-=-=-=-=-=-=-=--=-=->>>>>>>>>>>>:");
-    console.log("-----=-=-=-=-=-=-=-=--=-=->>>>>>>>>>>>:");
-    console.log("-----=-=-=-=-=-=-=-=--=-=->>>>>>>>>>>>:");
-    console.log("MCP Server received chat request:", {
-      message: req.body.message,
-      product_id: req.body.product_id,
-      user_id: req.body.user_id,
-      authorization: authorization,
+    Logger.info("Chat request received", {
+      message: req.body.message?.substring(0, 50),
+      hasProductId: !!req.body.product_id,
+      hasUserId: !!req.body.user_id,
     });
 
-    // Forward cookies to the MCP service
-    const response = await MCPChatbotService.processChat(
-      req.body,
-      authorization
-    );
+    // Extract authorization headers
+    const authHeader = req.headers.authorization || "";
+    const cookieHeader = req.headers.cookie || "";
 
-    console.log("MCP Server sending response:", response);
+    if (!authHeader && req.body.user_id) {
+      Logger.warn("Authenticated request missing Authorization header");
+    }
+
+    // Process chat through chatbot service
+    const response = await ChatbotService.processChat(req.body, authHeader);
+
+    Logger.success("Chat response sent");
     res.json(response);
   } catch (error: any) {
-    console.error("MCP Server Error:", error);
+    Logger.error("Chat endpoint error", error);
     res.status(500).json({
       error: error.message,
       reply: "Sorry, I encountered an error. Please try again.",
@@ -58,11 +70,10 @@ app.post("/chat", async (req, res) => {
   }
 });
 
+// Start server
 app.listen(PORT, () => {
-  console.log(`✅ MCP HTTP server running on http://localhost:${PORT}`);
-  console.log(
-    `📡 Backend API URL: ${
-      process.env.BACKEND_API_URL || "http://localhost:3000"
-    }`
+  Logger.success(`MCP HTTP server running on http://localhost:${PORT}`);
+  Logger.info(
+    `Backend API URL: ${process.env.BACKEND_API_URL || "http://localhost:3000"}`
   );
 });
