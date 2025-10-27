@@ -13,6 +13,7 @@ import OrderRouter from '@/api/orders/order.router';
 import CartRouter from '@/api/carts/carts.router';
 import ReviewRouter from '@/api/reviews/review.router';
 import ProductRouter from '@/api/products/product.router';
+import ChatbotRouter from '@/api/chatbot/chatbot.router';
 import { errorMiddleware } from '@/middlewares/error.middleware';
 import corsMiddleware from './middlewares/cors.middleware';
 
@@ -36,6 +37,7 @@ app.use('/order', OrderRouter);
 app.use('/cart', CartRouter);
 app.use('/review', ReviewRouter);
 app.use('/product', ProductRouter);
+app.use('/chatbot', ChatbotRouter);
 
 // Middlewares (after routes):
 app.use(errorMiddleware); // Every endpoint & middleware chain avaliable will eventually go to error middleware in case of exception thrown

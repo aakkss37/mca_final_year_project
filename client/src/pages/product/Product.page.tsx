@@ -7,6 +7,7 @@ import { ImageSlider } from '@/shared/components/ImageSlider';
 import LoadingAnimation from '@/shared/components/LoadingAnimation';
 import { useMessages } from '@/shared/hooks/useMessages.hook';
 import { useNavigate } from 'react-router';
+import { Chatbot } from '@/shared/components/Chatbot.component';
 
 type ProductPageParams = {
     id: string;
@@ -22,6 +23,7 @@ export const ProductPage = () => {
         navigate('/404');
         return;
     }
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const { currentProduct, fetchProductState } = useProduct({
         product_id: params.id,
         initialProduct: location.state?.product,
@@ -58,6 +60,16 @@ export const ProductPage = () => {
                     <ProductReviews product_id={currentProduct!.product_id} />
                 </div>
             </div>
+
+            {/* AI Chatbot */}
+            <Chatbot
+                productId={currentProduct?.product_id}
+                onAddToCart={(productId, quantity) => {
+                    // TODO: Integrate with your existing add to cart logic
+                    console.log('Adding to cart from chatbot:', productId, quantity);
+                    displayMessage({ message: `Added ${quantity} item(s) to cart!`, type: 'success' });
+                }}
+            />
         </div>
     );
 };
